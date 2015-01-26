@@ -41,7 +41,10 @@ module Devise
       def valid_password?(password)
         return false if encrypted_password.blank?
         bcrypt   = ::BCrypt::Password.new(encrypted_password)
-        password = ::BCrypt::Engine.hash_secret("#{password}#{self.class.pepper}", bcrypt.salt)
+        if self.class.pepper.present?
+          password = "#{password}#{self.class.pepper}"
+        end
+        password = ::BCrypt::Engine.hash_secret(password, bcrypt.salt)
         Devise.secure_compare(password, encrypted_password)
       end
 
@@ -122,7 +125,10 @@ module Devise
 
       # Digests the password using bcrypt.
       def password_digest(password)
-        ::BCrypt::Password.create("#{password}#{self.class.pepper}", :cost => self.class.stretches).to_s
+        if self.class.pepper.present?
+          password = "#{password}#{self.class.pepper}"
+        end
+        ::BCrypt::Password.create(password, :cost => self.class.stretches).to_s
       end
 
       module ClassMethods
